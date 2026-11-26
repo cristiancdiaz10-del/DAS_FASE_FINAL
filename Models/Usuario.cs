@@ -1,6 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
 
-namespace DAS_FASE2.Models
+namespace DAS_Proyecto.Models
 {
     public enum RolUsuario
     {
@@ -8,22 +11,32 @@ namespace DAS_FASE2.Models
         Operativo
     }
 
-    public class Usuario
+    public class Usuario : IdentityUser<int>
     {
-        [Key]
-        public int IdUsuario { get; set; }
+        [NotMapped]
+        public int IdUsuario
+        {
+            get => Id;
+            set => Id = value;
+        }
 
         [Required(ErrorMessage = "El nombre es obligatorio")]
         [StringLength(100)]
         public string Nombre { get; set; } = string.Empty;
 
+        [NotMapped]
         [Required(ErrorMessage = "El correo de acceso es obligatorio")]
         [EmailAddress(ErrorMessage = "Formato de correo inválido")]
         [StringLength(100)]
-        public string Correo { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "La contraseña es obligatoria")]
-        public string PasswordHash { get; set; } = string.Empty; // Nunca texto plano
+        public string Correo
+        {
+            get => Email ?? string.Empty;
+            set
+            {
+                Email = value;
+                UserName = value;
+            }
+        }
 
         public RolUsuario Rol { get; set; } = RolUsuario.Operativo;
     }

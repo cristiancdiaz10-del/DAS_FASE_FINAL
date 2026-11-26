@@ -1,115 +1,89 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using DAS_FASE2.Repositories.Interfaces;
-using DAS_FASE2.Models;
-using DAS_FASE2.ViewModels;
+using DAS_Proyecto.Models;
+using DAS_Proyecto.Repositories.Interfaces;
+using DAS_Proyecto.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace DAS_FASE2.Controllers
+namespace DAS_Proyecto.Controllers;
+
+public class ServiciosController : Controller
 {
-    public class ServiciosController : Controller
+    private readonly IServicioRepository _repository;
+    public ServiciosController(IServicioRepository repository) => _repository = repository;
+
+    [HttpGet]
+    public async Task<IActionResult> Index(string? busqueda)
     {
-        private readonly IServicioRepository _servicioRepository;
+        ViewBag.Busqueda = busqueda;
+        return View(await _repository.ObtenerTodosAsync(busqueda));
+    }
 
-        public ServiciosController(IServicioRepository servicioRepository)
+    [HttpGet]
+    public IActionResult Create() => View(new ServicioViewModel());
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(ServicioViewModel modelo)
+    {
+        if (!ModelState.IsValid) return View(modelo);
+        try
         {
-            _servicioRepository = servicioRepository;
-        }
-
-        // ==========================================
-        // 1. READ (Listar): Muestra todos los servicios
-        // ==========================================
-        [HttpGet]
-        public async Task<IActionResult> Index()
-        {
-            var listaServicios = await _servicioRepository.ObtenerTodosAsync();
-            return View(listaServicios);
-        }
-
-        // ==========================================
-        // 2. CREATE (GET): Muestra el formulario vacío
-        // ==========================================
-        [HttpGet]
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // ==========================================
-        // 3. CREATE (POST): Recibe los datos y los guarda
-        // ==========================================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ServicioViewModel servicioViewModel)
-        {
-            if (ModelState.IsValid)
-            {
-                var servicio = new Servicio
-                {
-                    NombreServicio = servicioViewModel.NombreServicio,
-                    Descripcion = servicioViewModel.Descripcion,
-                    PrecioBase = servicioViewModel.PrecioBase
-                };
-
-                await _servicioRepository.AgregarAsync(servicio);
-                return RedirectToAction(nameof(Index));
-            }
-            return View(servicioViewModel);
-        }
-
-        // ==========================================
-        // 4. EDIT (GET): Muestra el formulario con los datos a editar
-        // ==========================================
-        [HttpGet]
-        public async Task<IActionResult> Edit(int id)
-        {
-            var servicio = await _servicioRepository.ObtenerPorIdAsync(id);
-            if (servicio == null)
-            {
-                return NotFound();
-            }
-
-            var servicioViewModel = new ServicioViewModel
-            {
-                IdServicio = servicio.IdServicio,
-                NombreServicio = servicio.NombreServicio,
-                Descripcion = servicio.Descripcion,
-                PrecioBase = servicio.PrecioBase
-            };
-
-            return View(servicioViewModel);
-        }
-
-        // ==========================================
-        // 5. EDIT (POST): Guarda los cambios actualizados
-        // ==========================================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, ServicioViewModel servicioViewModel)
-        {
-            if (ModelState.IsValid)
-            {
-                var servicio = new Servicio
-                {
-                    IdServicio = id, // Vital para identificar qué servicio actualizar
-                    NombreServicio = servicioViewModel.NombreServicio,
-                    Descripcion = servicioViewModel.Descripcion,
-                    PrecioBase = servicioViewModel.PrecioBase
-                };
-
-                await _servicioRepository.ActualizarAsync(servicio);
-                return RedirectToAction(nameof(Index));
-            }
-            return View(servicioViewModel);
-        }
-
-        // ==========================================
-        // 6. DELETE: Elimina el registro por ID
-        // ==========================================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
-        {
-            await _servicioRepository.EliminarAsync(id);
+            await _repository.AgregarAsync(new Servicio { NombreServicio = modelo.NombreServicio.Trim(), Descripcion = modelo.Descripcion?.Trim(), PrecioBase = modelo.PrecioBase });
+            TempData["MensajeExito"] = "Servicio agregado correctamente.";
             return RedirectToAction(nameof(Index));
         }
+        catch (DbUpdateException)
+        {
+            ModelState.AddModelError(string.Empty, "No se pudo guardar el servicio.");
+            return View(modelo);
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var servicio = await _repository.ObtenerPorIdAsync(id);
+        if (servicio == null) return NotFound();
+        return View(new ServicioViewModel { IdServicio = servicio.IdServicio, NombreServicio = servicio.NombreServicio, Descripcion = servicio.Descripcion, PrecioBase = servicio.PrecioBase });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, ServicioViewModel modelo)
+    {
+        if (id != modelo.IdServicio) return BadRequest();
+        if (!ModelState.IsValid) return View(modelo);
+        var servicio = await _repository.ObtenerPorIdAsync(id);
+        if (servicio == null) return NotFound();
+        servicio.NombreServicio = modelo.NombreServicio.Trim();
+        servicio.Descripcion = modelo.Descripcion?.Trim();
+        servicio.PrecioBase = modelo.PrecioBase;
+        try
+        {
+            await _repository.ActualizarAsync(servicio);
+            TempData["MensajeExito"] = "Servicio actualizado correctamente.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            ModelState.AddModelError(string.Empty, "No se pudo actualizar el servicio.");
+            return View(modelo);
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
+        {
+            await _repository.EliminarAsync(id);
+            TempData["MensajeExito"] = "Servicio eliminado correctamente.";
+        }
+        catch (DbUpdateException)
+        {
+            TempData["MensajeError"] = "No se puede eliminar el servicio porque está asociado a cotizaciones.";
+        }
+        return RedirectToAction(nameof(Index));
     }
 }

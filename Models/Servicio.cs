@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace DAS_FASE2.Models
+namespace DAS_Proyecto.Models
 {
     public class Servicio
     {
@@ -16,6 +17,7 @@ namespace DAS_FASE2.Models
 
         [Required(ErrorMessage = "El precio base es obligatorio")]
         [Range(0.01, 1000000.00, ErrorMessage = "El precio debe ser mayor a cero")]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal PrecioBase { get; set; }
     }
 }

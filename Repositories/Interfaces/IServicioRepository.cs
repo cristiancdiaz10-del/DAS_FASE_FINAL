@@ -1,10 +1,10 @@
-﻿using DAS_FASE2.Models;
+﻿using DAS_Proyecto.Models;
 
-namespace DAS_FASE2.Repositories.Interfaces
+namespace DAS_Proyecto.Repositories.Interfaces
 {
     public interface IServicioRepository
     {
-        Task<IEnumerable<Servicio>> ObtenerTodosAsync();
+        Task<IEnumerable<Servicio>> ObtenerTodosAsync(string? busqueda = null);
         Task<Servicio?> ObtenerPorIdAsync(int id);
         Task AgregarAsync(Servicio servicio);
         Task ActualizarAsync(Servicio servicio);

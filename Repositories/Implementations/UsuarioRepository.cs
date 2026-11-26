@@ -1,22 +1,50 @@
-﻿using DAS_FASE2.Data;
-using DAS_FASE2.Models;
-using DAS_FASE2.Repositories.Interfaces;
+﻿
+using DAS_Proyecto.Data;
+using DAS_Proyecto.Models;
+using DAS_Proyecto.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace DAS_FASE2.Repositories.Implementations
+namespace DAS_Proyecto.Repositories.Implementations
 {
     public class UsuarioRepository : IUsuarioRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public UsuarioRepository(ApplicationDbContext context)
+        public UsuarioRepository(
+            ApplicationDbContext context,
+            IUnitOfWork unitOfWork)
         {
             _context = context;
+            _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<Usuario>> ObtenerTodosAsync()
+        public async Task<IEnumerable<Usuario>> ObtenerTodosAsync(
+            string? busqueda = null)
         {
-            return await _context.Usuarios.ToListAsync();
+            IQueryable<Usuario> query =
+                _context.Usuarios.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(busqueda))
+            {
+                var termino = busqueda.Trim();
+
+                var buscarPorRol = Enum.TryParse<RolUsuario>(
+                    termino,
+                    true,
+                    out var rol
+                ) && Enum.IsDefined(typeof(RolUsuario), rol);
+
+                query = query.Where(u =>
+                    u.Nombre.Contains(termino) ||
+                    (u.Email != null && u.Email.Contains(termino)) ||
+                    (buscarPorRol && u.Rol == rol)
+                );
+            }
+
+            return await query
+                .OrderBy(u => u.Nombre)
+                .ToListAsync();
         }
 
         public async Task<Usuario?> ObtenerPorIdAsync(int id)
@@ -24,25 +52,35 @@ namespace DAS_FASE2.Repositories.Implementations
             return await _context.Usuarios.FindAsync(id);
         }
 
+        public async Task<Usuario?> ObtenerPorCorreoAsync(string correo)
+        {
+            var correoNormalizado = correo.Trim();
+
+            return await _context.Usuarios.FirstOrDefaultAsync(
+                u => u.Email == correoNormalizado
+            );
+        }
+
         public async Task AgregarAsync(Usuario usuario)
         {
             await _context.Usuarios.AddAsync(usuario);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task ActualizarAsync(Usuario usuario)
         {
             _context.Usuarios.Update(usuario);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task EliminarAsync(int id)
         {
             var usuario = await _context.Usuarios.FindAsync(id);
+
             if (usuario != null)
             {
                 _context.Usuarios.Remove(usuario);
-                await _context.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
             }
         }
     }

@@ -1,2 +1,25 @@
+# Visual Studio / C#
 .vs/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.cache
+*.log
+
+# Test output
+TestResults/
+
+# Local secrets
+appsettings.*.local.json
+
+# Configuraciones locales y credenciales
+appsettings.json
+appsettings.Development.json
+appsettings.*.local.json
+
+# Archivos generados
+bin/
+obj/
 .vs/
+TestResults/
