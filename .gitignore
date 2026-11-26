@@ -23,3 +23,8 @@ bin/
 obj/
 .vs/
 TestResults/
+
+# Archivos generados por compilacion
+[Bb]in/
+[Oo]bj/
+.vs/

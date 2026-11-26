@@ -6,15 +6,20 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<RootNamespace>DAS_Proyecto</RootNamespace>
 		<NuGetAudit>false</NuGetAudit>
-		<DefaultItemExcludes>$(DefaultItemExcludes);PruebasPago/**</DefaultItemExcludes>
-	  <UserSecretsId>1443ba5a-00ec-41fe-9418-e0ba8178d36f</UserSecretsId>
-  </PropertyGroup>
+		<DefaultItemExcludes>$(DefaultItemExcludes);PruebasPago/**;Integracion_Fase3_Corregida/**</DefaultItemExcludes>
+		<UserSecretsId>1443ba5a-00ec-41fe-9418-e0ba8178d36f</UserSecretsId>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<Compile Remove="PruebasPago/**/*.cs" />
 		<Content Remove="PruebasPago/**/*" />
 		<EmbeddedResource Remove="PruebasPago/**/*" />
 		<None Remove="PruebasPago/**/*" />
+
+		<Compile Remove="Integracion_Fase3_Corregida/**/*.cs" />
+		<Content Remove="Integracion_Fase3_Corregida/**/*" />
+		<EmbeddedResource Remove="Integracion_Fase3_Corregida/**/*" />
+		<None Remove="Integracion_Fase3_Corregida/**/*" />
 	</ItemGroup>
 
 	<ItemGroup>
