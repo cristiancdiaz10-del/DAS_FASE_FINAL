@@ -100,4 +100,8 @@ public class InventarioController : Controller
         }
         return RedirectToAction(nameof(Index));
     }
+
+
+  
+
 }

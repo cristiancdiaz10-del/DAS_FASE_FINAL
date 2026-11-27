@@ -10,7 +10,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using System.Globalization;
+using System.Reflection;
+using System.Text.Json.Serialization;
 
 namespace DAS_Proyecto;
 
@@ -19,11 +22,19 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        if (string.IsNullOrWhiteSpace(connectionString))
-            throw new InvalidOperationException("No se configuró ConnectionStrings:DefaultConnection.");
 
-        builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+        var connectionString =
+            builder.Configuration.GetConnectionString("DefaultConnection");
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "No se configuró ConnectionStrings:DefaultConnection.");
+        }
+
+        builder.Services.AddDbContext<ApplicationDbContext>(
+            options => options.UseSqlServer(connectionString));
+
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 
@@ -66,13 +77,41 @@ public class Program
                 .RequireAuthenticatedUser()
                 .Build();
         });
-        builder.Services.AddControllersWithViews();
 
+        builder.Services
+            .AddControllersWithViews()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.ReferenceHandler =
+                    ReferenceHandler.IgnoreCycles;
+            });
 
+        builder.Services.AddEndpointsApiExplorer();
+
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "API REST - Rótulos Ranibal",
+                Version = "v1",
+                Description =
+                    "Servicios web para gestión de cotizaciones, órdenes de trabajo, materiales y pagos."
+            });
+
+            var xmlFile =
+                $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+            if (File.Exists(xmlPath))
+            {
+                options.IncludeXmlComments(xmlPath);
+            }
+        });
 
         var app = builder.Build();
 
         var supportedCultures = new[] { new CultureInfo("en-US") };
+
         app.UseRequestLocalization(new RequestLocalizationOptions
         {
             DefaultRequestCulture = new RequestCulture("en-US"),
@@ -83,22 +122,24 @@ public class Program
         using (var scope = app.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
+
             try
             {
-                var context = services.GetRequiredService<ApplicationDbContext>();
-                var passwordHasher = services.GetRequiredService<IPasswordHasher<Usuario>>();
+                var context =
+                    services.GetRequiredService<ApplicationDbContext>();
+                var passwordHasher =
+                    services.GetRequiredService<IPasswordHasher<Usuario>>();
 
-               
                 context.Database.Migrate();
 
-             
                 if (!context.Usuarios.Any())
                 {
                     var usuarioAdmin = new Usuario
                     {
                         Nombre = "Administrador",
                         Correo = "admin@ranibal.com",
-                        PasswordHash = passwordHasher.HashPassword(null, "123456"),
+                        PasswordHash =
+                            passwordHasher.HashPassword(null, "123456"),
                         Rol = RolUsuario.Administrador
                     };
 
@@ -109,12 +150,25 @@ public class Program
             catch (Exception ex)
             {
                 var logger = services.GetRequiredService<ILogger<Program>>();
-                logger.LogError(ex, "Ocurrió un error al sembrar la base de datos.");
+                logger.LogError(
+                    ex,
+                    "Ocurrió un error al sembrar la base de datos.");
             }
         }
 
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
 
-        if (!app.Environment.IsDevelopment())
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint(
+                    "/swagger/v1/swagger.json",
+                    "API Rótulos Ranibal v1");
+                options.RoutePrefix = "swagger";
+            });
+        }
+        else
         {
             app.UseExceptionHandler("/Home/Error");
             app.UseHsts();
@@ -125,7 +179,13 @@ public class Program
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapControllerRoute(name: "default", pattern: "{controller=Account}/{action=Login}/{id?}");
+
+        app.MapControllers();
+
+        app.MapControllerRoute(
+            name: "default",
+            pattern: "{controller=Account}/{action=Login}/{id?}");
+
         app.Run();
     }
 }
