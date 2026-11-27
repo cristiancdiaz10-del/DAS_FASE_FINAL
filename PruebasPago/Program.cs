@@ -1,5 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using DAS_Proyecto.DTOs.Materiales;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -67,6 +69,38 @@ void ProbarExcepcion<T>(
         Console.WriteLine($"  Obtenido: {ex.GetType().Name}");
     }
 }
+
+bool EsDtoValido(object dto)
+{
+    var errores = new List<ValidationResult>();
+    return Validator.TryValidateObject(
+        dto,
+        new ValidationContext(dto),
+        errores,
+        validateAllProperties: true
+    );
+}
+
+MaterialCreateDto CrearMaterialCreateValido() => new()
+{
+    CodigoMaterial = "MAT-001",
+    NombreMaterial = "Lona",
+    CantidadDisponible = 10m,
+    UnidadMedida = "Unidad",
+    CostoUnitario = 2m,
+    Descripcion = "Material de prueba"
+};
+
+MaterialUpdateDto CrearMaterialUpdateValido() => new()
+{
+    IdMaterial = 1,
+    CodigoMaterial = "MAT-001",
+    NombreMaterial = "Lona",
+    CantidadDisponible = 10m,
+    UnidadMedida = "Unidad",
+    CostoUnitario = 2m,
+    Descripcion = "Material de prueba"
+};
 
 // ============================================
 // PRUEBAS DE VALIDACIÓN DE PAGOS
@@ -497,6 +531,156 @@ Probar(
 );
 
 // ============================================
+// PRUEBAS DE VALIDACIÓN DE MATERIALES
+// ============================================
+
+Console.WriteLine("\n========== PRUEBAS DE VALIDACIÓN DE MATERIALES ==========");
+
+// PRUEBA 33: Crear material válido
+Probar(
+    "MaterialCreateDto acepta datos válidos",
+    "True",
+    EsDtoValido(CrearMaterialCreateValido()).ToString()
+);
+
+// PRUEBA 34: Código demasiado largo
+var createCodigo = CrearMaterialCreateValido();
+createCodigo.CodigoMaterial = new string('A', 31);
+
+Probar(
+    "MaterialCreateDto rechaza código mayor a 30 caracteres",
+    "False",
+    EsDtoValido(createCodigo).ToString()
+);
+
+// PRUEBA 35: Nombre demasiado largo
+var createNombre = CrearMaterialCreateValido();
+createNombre.NombreMaterial = new string('A', 101);
+
+Probar(
+    "MaterialCreateDto rechaza nombre mayor a 100 caracteres",
+    "False",
+    EsDtoValido(createNombre).ToString()
+);
+
+// PRUEBA 36: Unidad demasiado larga
+var createUnidad = CrearMaterialCreateValido();
+createUnidad.UnidadMedida = new string('A', 41);
+
+Probar(
+    "MaterialCreateDto rechaza unidad mayor a 40 caracteres",
+    "False",
+    EsDtoValido(createUnidad).ToString()
+);
+
+// PRUEBA 37: Descripción demasiado larga
+var createDescripcion = CrearMaterialCreateValido();
+createDescripcion.Descripcion = new string('A', 501);
+
+Probar(
+    "MaterialCreateDto rechaza descripción mayor a 500 caracteres",
+    "False",
+    EsDtoValido(createDescripcion).ToString()
+);
+
+// PRUEBA 38: Cantidad negativa
+var createCantidad = CrearMaterialCreateValido();
+createCantidad.CantidadDisponible = -1m;
+
+Probar(
+    "MaterialCreateDto rechaza cantidad negativa",
+    "False",
+    EsDtoValido(createCantidad).ToString()
+);
+
+// PRUEBA 39: Costo negativo
+var createCosto = CrearMaterialCreateValido();
+createCosto.CostoUnitario = -1m;
+
+Probar(
+    "MaterialCreateDto rechaza costo negativo",
+    "False",
+    EsDtoValido(createCosto).ToString()
+);
+
+// PRUEBA 40: Actualización válida
+Probar(
+    "MaterialUpdateDto acepta datos válidos",
+    "True",
+    EsDtoValido(CrearMaterialUpdateValido()).ToString()
+);
+
+// PRUEBA 41: ID inválido
+var updateId = CrearMaterialUpdateValido();
+updateId.IdMaterial = 0;
+
+Probar(
+    "MaterialUpdateDto rechaza ID igual a cero",
+    "False",
+    EsDtoValido(updateId).ToString()
+);
+
+// PRUEBA 42: Código demasiado largo
+var updateCodigo = CrearMaterialUpdateValido();
+updateCodigo.CodigoMaterial = new string('A', 31);
+
+Probar(
+    "MaterialUpdateDto rechaza código mayor a 30 caracteres",
+    "False",
+    EsDtoValido(updateCodigo).ToString()
+);
+
+// PRUEBA 43: Nombre demasiado largo
+var updateNombre = CrearMaterialUpdateValido();
+updateNombre.NombreMaterial = new string('A', 101);
+
+Probar(
+    "MaterialUpdateDto rechaza nombre mayor a 100 caracteres",
+    "False",
+    EsDtoValido(updateNombre).ToString()
+);
+
+// PRUEBA 44: Unidad demasiado larga
+var updateUnidad = CrearMaterialUpdateValido();
+updateUnidad.UnidadMedida = new string('A', 41);
+
+Probar(
+    "MaterialUpdateDto rechaza unidad mayor a 40 caracteres",
+    "False",
+    EsDtoValido(updateUnidad).ToString()
+);
+
+// PRUEBA 45: Descripción demasiado larga
+var updateDescripcion = CrearMaterialUpdateValido();
+updateDescripcion.Descripcion = new string('A', 501);
+
+Probar(
+    "MaterialUpdateDto rechaza descripción mayor a 500 caracteres",
+    "False",
+    EsDtoValido(updateDescripcion).ToString()
+);
+
+// PRUEBA 46: Cantidad negativa
+var updateCantidad = CrearMaterialUpdateValido();
+updateCantidad.CantidadDisponible = -1m;
+
+Probar(
+    "MaterialUpdateDto rechaza cantidad negativa",
+    "False",
+    EsDtoValido(updateCantidad).ToString()
+);
+
+// PRUEBA 47: Costo negativo
+var updateCosto = CrearMaterialUpdateValido();
+updateCosto.CostoUnitario = -1m;
+
+Probar(
+    "MaterialUpdateDto rechaza costo negativo",
+    "False",
+    EsDtoValido(updateCosto).ToString()
+);
+
+// ============================================
 // RESULTADOS FINALES
 // ============================================
 
@@ -567,6 +751,38 @@ sealed class FakePagoRepository : IPagoRepository
             _pagos
                 .Where(p => p.IdOrdenTrabajo == idOrdenTrabajo)
                 .ToList()
+        );
+    }
+
+    public Task<Pago?> ObtenerPorCodigoAsync(string codigoPago)
+    {
+        return Task.FromResult(
+            _pagos.FirstOrDefault(p => p.CodigoPago == codigoPago)
+        );
+    }
+
+    public Task<IEnumerable<OrdenTrabajo>> ObtenerOrdenesParaPagoAsync()
+    {
+        return Task.FromResult<IEnumerable<OrdenTrabajo>>(
+            new List<OrdenTrabajo>()
+        );
+    }
+
+    public Task<IEnumerable<Pago>> ObtenerPorPeriodoAsync(
+        DateTime inicio,
+        DateTime finExclusivo)
+    {
+        return Task.FromResult<IEnumerable<Pago>>(
+            _pagos.Where(p => p.FechaPago >= inicio && p.FechaPago < finExclusivo).ToList()
+        );
+    }
+
+    public Task<IEnumerable<OrdenTrabajo>> ObtenerOrdenesPorPeriodoAsync(
+        DateTime inicio,
+        DateTime finExclusivo)
+    {
+        return Task.FromResult<IEnumerable<OrdenTrabajo>>(
+            new List<OrdenTrabajo>()
         );
     }
 

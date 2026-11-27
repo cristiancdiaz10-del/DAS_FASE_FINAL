@@ -1,0 +1,70 @@
+@model DAS_Proyecto.ViewModels.ServicioViewModel
+
+@{
+    ViewData["Title"] = "Editar Servicio";
+}
+
+<div class="max-w-2xl mx-auto mt-8 mb-10 bg-white p-6 md:p-8 rounded-xl border border-gray-200 shadow-sm">
+
+    <h2 class="text-2xl font-bold text-gray-900">Editar Servicio</h2>
+    <hr class="my-5 border-gray-200" />
+
+    <form asp-action="Edit" method="post" class="space-y-5">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" asp-for="IdServicio" />
+
+        <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm"></div>
+
+        <div>
+            <label asp-for="NombreServicio"
+                   class="block text-sm font-semibold text-gray-700 mb-2">
+                Nombre del Servicio
+            </label>
+            <input asp-for="NombreServicio" class="form-control" />
+            <span asp-validation-for="NombreServicio"
+                  class="text-red-600 text-sm mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="Descripcion"
+                   class="block text-sm font-semibold text-gray-700 mb-2">
+                Descripción
+            </label>
+            <textarea asp-for="Descripcion"
+                      class="form-control"
+                      rows="3"></textarea>
+            <span asp-validation-for="Descripcion"
+                  class="text-red-600 text-sm mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="PrecioBase"
+                   class="block text-sm font-semibold text-gray-700 mb-2">
+                Precio Base
+            </label>
+            <input asp-for="PrecioBase"
+                   type="number"
+                   step="0.01"
+                   class="form-control" />
+            <span asp-validation-for="PrecioBase"
+                  class="text-red-600 text-sm mt-1 block"></span>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-3 pt-5 border-t border-gray-200">
+            <button type="submit" class="btn-primary-orange">
+                Actualizar Cambios
+            </button>
+
+            <a asp-action="Index" class="btn-cancel">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
