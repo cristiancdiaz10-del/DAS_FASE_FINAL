@@ -1,116 +1,197 @@
+@model IReadOnlyList<DAS_Proyecto.Models.Material>
+
 @{
     ViewData["Title"] = "Inventario";
 }
 
 <style>
-    .header-flex {
+    .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        width: 100%;
-        margin-bottom: 2rem;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
     }
 
     .page-title {
         font-size: 1.75rem;
         font-weight: 800;
         color: #111827;
-        line-height: 1.2;
     }
 
-    .page-subtitle {
+    .subtitle {
         color: #6b7280;
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
+        font-size: .9rem;
     }
 
- 
-    .btn-primary-orange {
-        background-color: #f59e0b;
-        color: #ffffff !important;
-        border: none;
-        padding: 0.65rem 1.25rem;
-        border-radius: 0.5rem;
-        font-weight: 700;
-        font-size: 0.875rem;
-        text-decoration: none;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        display: inline-block;
-        text-align: center;
-    }
-
-    .btn-primary-orange:hover {
-        background-color: #d97706;
-    }
-
-  
-    .card-panel {
-        background-color: #ffffff;
-        border-radius: 0.75rem;
-        padding: 2rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    .panel {
+        background: #fff;
         border: 1px solid #e5e7eb;
+        border-radius: .75rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
     }
 
-    .data-table {
+    .filters {
+        display: flex;
+        gap: .75rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .control {
+        padding: .65rem .9rem;
+        border: 1px solid #d1d5db;
+        border-radius: .5rem;
+        background: #fff;
+    }
+
+    .btn-main {
+        background: #f59e0b;
+        color: #fff;
+        text-decoration: none;
+        border: 0;
+        border-radius: .5rem;
+        padding: .7rem 1rem;
+        font-weight: 700;
+    }
+
+    .btn-dark {
+        background: #1f2937;
+        color: #fff;
+        border: 0;
+        border-radius: .5rem;
+        padding: .7rem 1rem;
+        cursor: pointer;
+    }
+
+    .table {
         width: 100%;
         border-collapse: collapse;
-        background-color: #ffffff;
-        margin-top: 1.5rem;
     }
 
-    .data-table th {
-        background-color: #f9fafb;
-        color: #4b5563;
-        font-weight: 700;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        padding: 0.75rem 1rem;
-        text-align: left;
-        border-bottom: 1px solid #e5e7eb;
+        .table th,
+        .table td {
+            text-align: left;
+            padding: .85rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: .9rem;
+        }
+
+        .table th {
+            font-size: .75rem;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+    .link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 600;
     }
 
-    .data-table td {
-        padding: 1rem;
-        font-size: 0.875rem;
-        color: #1f2937;
-        border-bottom: 1px solid #f3f4f6;
+    .danger {
+        color: #b91c1c;
+        background: none;
+        border: 0;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .alert {
+        padding: .75rem 1rem;
+        border-radius: .5rem;
+        margin-bottom: 1rem;
+        background: #ecfdf5;
+        color: #065f46;
+    }
+
+    .error {
+        background: #fef2f2;
+        color: #991b1b;
+    }
+
+    @@media (max-width: 700px) {
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        .table {
+            min-width: 720px;
+        }
+
+        .page-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
     }
 </style>
 
-
-<div class="header-flex">
+<div class="page-header">
     <div>
         <h1 class="page-title">Inventario</h1>
-        <p class="page-subtitle">Control y gestión de materiales y suministros.</p>
+        <p class="subtitle">Materiales y existencias registradas en la base de datos.</p>
     </div>
-    <a asp-controller="Inventario" asp-action="Nuevo" class="btn-primary-orange">+ Nuevo material</a>
+
+    <a asp-action="Nuevo" class="btn-main">+ Nuevo material</a>
 </div>
 
-<div class="card-panel">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Código</th>
-                <th>Material</th>
-                <th>Stock</th>
-                <th>Precio</th>
-                <th style="text-align: right;">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>MAT-001</strong></td>
-                <td>Vinil autoadhesivo</td>
-                <td>45 rollos</td>
-                <td>$45.00</td>
-                <td style="text-align: right;">
-                    <a asp-controller="Inventario" asp-action="EditarMaterial" asp-route-id="MAT-004" class="btn-edit">
-    Editar
-</a>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+@if (TempData["MensajeExito"] is string ok)
+{
+    <div class="alert">@ok</div>
+}
+
+@if (TempData["MensajeError"] is string error)
+{
+    <div class="alert error">@error</div>
+}
+
+<p id="estadoMateriales" role="status">Preparando inventario...</p>
+<div id="errorMateriales" class="alert error" role="alert" hidden></div>
+
+<div class="panel">
+    <form id="formBuscarMateriales"
+          asp-action="Index"
+          method="get"
+          class="filters">
+        <input class="control"
+               type="search"
+               name="busqueda"
+               value="@ViewBag.Busqueda"
+               placeholder="Buscar por código, material o unidad..."
+               style="min-width:280px; flex:1" />
+
+        <button class="btn-dark" type="submit">Buscar</button>
+
+        <a asp-action="Index"
+           class="link"
+           style="align-self:center">Limpiar</a>
+    </form>
+
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Material</th>
+                    <th>Existencias</th>
+                    <th>Unidad</th>
+                    <th>Costo unitario</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody id="tablaMaterialesApi">
+                <tr>
+                    <td colspan="6" style="text-align:center; color:#6b7280; padding:2rem">
+                        Cargando materiales...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/inventario.js" asp-append-version="true"></script>
+}
