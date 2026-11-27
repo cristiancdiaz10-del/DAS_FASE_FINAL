@@ -116,15 +116,19 @@
 
             <form asp-controller="Account" asp-action="Login" method="post">
                 @Html.AntiForgeryToken()
-
+                @if (ViewData["ReturnUrl"] is string returnUrl &&
+     !string.IsNullOrWhiteSpace(returnUrl))
+{
+    <input type="hidden" name="returnUrl" value="@returnUrl" />
+}
                 <div class="form-group">
-                    <label for="usuario">Usuario</label>
-                    <input type="text"
-                           id="usuario"
-                           name="usuario"
-                           placeholder="Ingresa tu usuario"
-                           autocomplete="username"
-                           required>
+                    <label for="usuario">Correo electrónico</label>
+<input type="email"
+       id="usuario"
+       name="usuario"
+       placeholder="Ingresa tu correo"
+       autocomplete="username"
+       required>
                 </div>
 
                 <div class="form-group">
@@ -137,7 +141,12 @@
                            required>
                 </div>
 
-                <p id="mensaje" class="mensaje"></p>
+                @if (ViewBag.MensajeError != null)
+{
+    <p class="mensaje" style="color: #dc2626;">
+        @ViewBag.MensajeError
+    </p>
+}
 
                 <button type="submit" class="login-button">
                     Ingresar al sistema

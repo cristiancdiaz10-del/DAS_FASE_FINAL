@@ -1,88 +1,226 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using DAS_Proyecto.Models;
+using DAS_Proyecto.Repositories.Interfaces;
+using DAS_Proyecto.Services.Interfaces;
+using DAS_Proyecto.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace DAS_Proyecto.Controllers
 {
     public class CotizacionesController : Controller
     {
-        public IActionResult Cotizaciones()
+        private readonly ICotizacionService _cotizacionService;
+        private readonly IClienteRepository _clienteRepository;
+        private readonly IUsuarioRepository _usuarioRepository;
+        private readonly IServicioRepository _servicioRepository;
+
+        public CotizacionesController(
+            ICotizacionService cotizacionService,
+            IClienteRepository clienteRepository,
+            IUsuarioRepository usuarioRepository,
+            IServicioRepository servicioRepository)
         {
-            return View();
+            _cotizacionService = cotizacionService;
+            _clienteRepository = clienteRepository;
+            _usuarioRepository = usuarioRepository;
+            _servicioRepository = servicioRepository;
         }
 
         [HttpGet]
-        public IActionResult AgregarCotizacion()
+        public async Task<IActionResult> Cotizaciones(string? busqueda, string? estado, CancellationToken cancellationToken)
         {
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult AgregarCotizacion(string cliente, DateTime fecha, decimal total, string estado)
-        {
-            TempData["MensajeExito"] = "Cotización agregada correctamente";
-            return RedirectToAction(nameof(Cotizaciones));
-        }
-
-        [HttpGet]
-        public IActionResult EditarCotizacion(string id)
-        {
-            var listaCotizaciones = new List<Dictionary<string, string>>
+            EstadoCotizacion? filtroEstado = null;
+            if (!string.IsNullOrWhiteSpace(estado))
             {
-                new Dictionary<string, string>
+                if (Enum.TryParse<EstadoCotizacion>(estado, true, out var estadoParseado) &&
+                    Enum.IsDefined(typeof(EstadoCotizacion), estadoParseado))
                 {
-                    { "Codigo", "COT-001" },
-                    { "OrdenId", "OT-001" },
-                    { "Cliente", "Comercial ABC" },
-                    { "Fecha", "2026-10-10" },
-                    { "Descripcion", "Fabricación de rótulo luminoso para fachada principal." },
-                    { "Materiales", "120.00" },
-                    { "ManoObra", "80.00" },
-                    { "Total", "200.00" }
-                },
-                new Dictionary<string, string>
-                {
-                    { "Codigo", "COT-002" },
-                    { "OrdenId", "OT-002" },
-                    { "Cliente", "Negocio XYZ" },
-                    { "Fecha", "2026-10-11" },
-                    { "Descripcion", "Impresión de cenefas publicitarias." },
-                    { "Materiales", "100.00" },
-                    { "ManoObra", "80.00" },
-                    { "Total", "180.00" }
-                },
-                new Dictionary<string, string>
-                {
-                    { "Codigo", "COT-003" },
-                    { "OrdenId", "OT-003" },
-                    { "Cliente", "Cliente de prueba" },
-                    { "Fecha", "2026-10-12" },
-                    { "Descripcion", "Adhesivos troquelados en vinil." },
-                    { "Materiales", "50.00" },
-                    { "ManoObra", "45.00" },
-                    { "Total", "95.00" }
+                    filtroEstado = estadoParseado;
                 }
-            };
-
-            var cotizacion = listaCotizaciones.FirstOrDefault(c => c["Codigo"] == id);
-
-            if (cotizacion == null)
-            {
-                return NotFound();
+                else
+                {
+                    ModelState.AddModelError("estado", "El filtro de estado seleccionado no es válido.");
+                }
             }
 
-            ViewBag.Cotizacion = cotizacion;
-            return View();
+            var modelo = new CotizacionesListadoViewModel
+            {
+                Busqueda = busqueda,
+                EstadoSeleccionado = estado,
+                Cotizaciones = await _cotizacionService.ObtenerListadoAsync(busqueda, filtroEstado, cancellationToken)
+            };
+
+            return View(modelo);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AgregarCotizacion(CancellationToken cancellationToken)
+        {
+            var modelo = new CotizacionFormViewModel { FechaCotizacion = DateTime.Today };
+            await CargarOpcionesAsync(modelo, cancellationToken);
+            return View(modelo);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult EditarCotizacion(string codigo, string cliente, DateTime fecha, string descripcion, decimal materiales, decimal manoObra, decimal total)
+        public async Task<IActionResult> AgregarCotizacion(CotizacionFormViewModel modelo, CancellationToken cancellationToken)
         {
-            TempData["MensajeExito"] = $"¡Cotización {codigo} actualizada correctamente!";
+            if (!ModelState.IsValid)
+            {
+                await CargarOpcionesAsync(modelo, cancellationToken);
+                return View(modelo);
+            }
+
+            var cotizacion = new Cotizacion
+            {
+                IdCliente = modelo.IdCliente,
+                IdUsuario = modelo.IdUsuario,
+                IdServicio = modelo.IdServicio,
+                FechaCotizacion = modelo.FechaCotizacion,
+                DescripcionTrabajo = modelo.DescripcionTrabajo.Trim(),
+                CostoMateriales = modelo.CostoMateriales,
+                CostoManoObra = modelo.CostoManoObra
+            };
+
+            try
+            {
+                await _cotizacionService.CrearAsync(cotizacion, cancellationToken);
+                TempData["MensajeExito"] = $"La cotización {cotizacion.CodigoCotizacion} se guardó correctamente.";
+                return RedirectToAction(nameof(Cotizaciones));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError(string.Empty, "No se pudo guardar la cotización. Verifica las relaciones y vuelve a intentarlo.");
+            }
+
+            await CargarOpcionesAsync(modelo, cancellationToken);
+            return View(modelo);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditarCotizacion(int id, CancellationToken cancellationToken)
+        {
+            var cotizacion = await _cotizacionService.ObtenerPorIdAsync(id, cancellationToken);
+            if (cotizacion == null) return NotFound();
+
+            var modelo = new CotizacionFormViewModel
+            {
+                IdCotizacion = cotizacion.IdCotizacion,
+                CodigoCotizacion = cotizacion.CodigoCotizacion,
+                IdCliente = cotizacion.IdCliente,
+                IdUsuario = cotizacion.IdUsuario,
+                IdServicio = cotizacion.IdServicio,
+                FechaCotizacion = cotizacion.FechaCotizacion,
+                DescripcionTrabajo = cotizacion.DescripcionTrabajo,
+                CostoMateriales = cotizacion.CostoMateriales,
+                CostoManoObra = cotizacion.CostoManoObra,
+                Estado = cotizacion.Estado
+            };
+
+            await CargarOpcionesAsync(modelo, cancellationToken);
+            return View(modelo);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarCotizacion(int id, CotizacionFormViewModel modelo, CancellationToken cancellationToken)
+        {
+            if (id != modelo.IdCotizacion) return BadRequest();
+
+            if (!ModelState.IsValid)
+            {
+                await CargarOpcionesAsync(modelo, cancellationToken);
+                return View(modelo);
+            }
+
+            var datos = new Cotizacion
+            {
+                IdCliente = modelo.IdCliente,
+                IdUsuario = modelo.IdUsuario,
+                IdServicio = modelo.IdServicio,
+                FechaCotizacion = modelo.FechaCotizacion,
+                DescripcionTrabajo = modelo.DescripcionTrabajo.Trim(),
+                CostoMateriales = modelo.CostoMateriales,
+                CostoManoObra = modelo.CostoManoObra,
+                Estado = modelo.Estado
+            };
+
+            try
+            {
+                await _cotizacionService.ActualizarAsync(id, datos, cancellationToken);
+                TempData["MensajeExito"] = $"La cotización {modelo.CodigoCotizacion} se actualizó correctamente.";
+                return RedirectToAction(nameof(Cotizaciones));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError(string.Empty, "No se pudieron guardar los cambios de la cotización.");
+            }
+
+            modelo.CodigoCotizacion = (await _cotizacionService.ObtenerPorIdAsync(id, cancellationToken))?.CodigoCotizacion;
+            await CargarOpcionesAsync(modelo, cancellationToken);
+            return View(modelo);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EliminarCotizacion(int id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _cotizacionService.EliminarAsync(id, cancellationToken);
+                TempData["MensajeExito"] = "La cotización se eliminó correctamente.";
+            }
+            catch (KeyNotFoundException ex)
+            {
+                TempData["MensajeError"] = ex.Message;
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["MensajeError"] = ex.Message;
+            }
+            catch (DbUpdateException)
+            {
+                TempData["MensajeError"] = "No se pudo eliminar la cotización porque tiene información relacionada.";
+            }
+
             return RedirectToAction(nameof(Cotizaciones));
+        }
+
+        private async Task CargarOpcionesAsync(CotizacionFormViewModel modelo, CancellationToken cancellationToken)
+        {
+            // El mismo DbContext scoped se comparte entre repositorios: ejecutar estas consultas
+            // en paralelo provocaria operaciones concurrentes no soportadas por EF Core.
+            var clientes = await _clienteRepository.ObtenerTodosAsync();
+            var usuarios = await _usuarioRepository.ObtenerTodosAsync();
+            var servicios = await _servicioRepository.ObtenerTodosAsync();
+
+            modelo.Clientes = clientes
+                .OrderBy(c => c.Nombre)
+                .Select(c => new SelectListItem(c.Empresa == null ? c.Nombre : $"{c.Nombre} - {c.Empresa}", c.IdCliente.ToString(), c.IdCliente == modelo.IdCliente))
+                .ToList();
+
+            modelo.Usuarios = usuarios
+                .OrderBy(u => u.Nombre)
+                .Select(u => new SelectListItem($"{u.Nombre} ({u.Rol})", u.IdUsuario.ToString(), u.IdUsuario == modelo.IdUsuario))
+                .ToList();
+
+            modelo.Servicios = servicios
+                .OrderBy(s => s.NombreServicio)
+                .Select(s => new SelectListItem($"{s.NombreServicio} - ${s.PrecioBase:N2}", s.IdServicio.ToString(), s.IdServicio == modelo.IdServicio))
+                .ToList();
         }
     }
 }

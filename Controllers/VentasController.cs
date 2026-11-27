@@ -1,13 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+namespace DAS_Proyecto.Controllers;
 
-namespace RotulosRanibal.Controllers
+public class VentasController : Controller
 {
-    public class VentasController : Controller
-    {
-      
-        public IActionResult Index()
-        {
-            return View();
-        }
-    }
+    // El informe mensual real está centralizado en InformesController y toma los datos de Pagos/Órdenes.
+    [HttpGet]
+    public IActionResult Index() => RedirectToAction("Mensual", "Informes");
 }
