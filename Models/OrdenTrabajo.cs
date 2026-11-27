@@ -45,6 +45,8 @@ namespace DAS_Proyecto.Models
         public EstadoOrden Estado { get; set; } =
             EstadoOrden.PendienteAnticipo;
 
+        public ICollection<Pago> Pagos { get; set; } = new List<Pago>();
+
         // Calcula el anticipo del 50 %
         public void CalcularAnticipo()
         {

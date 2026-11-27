@@ -1,55 +1,75 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using DAS_Proyecto.Services.Interfaces;
+using DAS_Proyecto.ViewModels;
+using Microsoft.AspNetCore.Mvc;
 
-namespace RotulosRanibal.Controllers
+namespace DAS_Proyecto.Controllers
 {
     public class PagosController : Controller
     {
-        
-        public IActionResult Index()
+        private readonly IPagoService _pagoService;
+
+        public PagosController(IPagoService pagoService)
         {
-            return View();
+            _pagoService = pagoService;
         }
 
-        
         [HttpGet]
-        public IActionResult RegistrarPago()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var modelo = await _pagoService.ObtenerListadoAsync();
+            return View(modelo);
         }
 
-       
+        [HttpGet]
+        public async Task<IActionResult> RegistrarPago()
+        {
+            var modelo = new RegistrarPagoViewModel
+            {
+                FechaPago = DateTime.Today,
+                OrdenesDisponibles = await _pagoService.ObtenerOrdenesDisponiblesAsync()
+            };
+
+            return View(modelo);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult GuardarPago(string orden, string tipoPago, decimal monto, DateTime fecha)
+        public async Task<IActionResult> GuardarPago(RegistrarPagoViewModel modelo)
         {
-            
-            TempData["MensajeExito"] = "¡Pago registrado correctamente!";
+            if (!ModelState.IsValid)
+            {
+                modelo.OrdenesDisponibles = await _pagoService.ObtenerOrdenesDisponiblesAsync();
+                return View("RegistrarPago", modelo);
+            }
 
+            var resultado = await _pagoService.RegistrarPagoAsync(
+                modelo.IdOrdenTrabajo,
+                modelo.MontoPago,
+                modelo.TipoPago,
+                modelo.FechaPago);
+
+            if (!resultado.Exito)
+            {
+                ModelState.AddModelError(string.Empty, resultado.Mensaje);
+                modelo.OrdenesDisponibles = await _pagoService.ObtenerOrdenesDisponiblesAsync();
+                return View("RegistrarPago", modelo);
+            }
+
+            TempData["MensajeExito"] = $"Pago {resultado.CodigoPago} registrado correctamente.";
             return RedirectToAction(nameof(Index));
         }
 
-        
-        public IActionResult DetallesPago(string id)
+        [HttpGet]
+        public async Task<IActionResult> DetallesPago(string id)
         {
-            var listaPagos = new List<Dictionary<string, string>>
-            {
-                new Dictionary<string, string> { { "Codigo", "PAG-001" }, { "Orden", "OT-001" }, { "Cliente", "Comercial ABC" }, { "Monto", "$175.00" }, { "Tipo", "Anticipo" }, { "Fecha", "10/10/2026" } },
-                new Dictionary<string, string> { { "Codigo", "PAG-002" }, { "Orden", "OT-002" }, { "Cliente", "Negocio XYZ" }, { "Monto", "$180.00" }, { "Tipo", "Saldo final" }, { "Fecha", "11/10/2026" } },
-                new Dictionary<string, string> { { "Codigo", "PAG-003" }, { "Orden", "OT-003" }, { "Cliente", "Cliente de prueba" }, { "Monto", "$95.00" }, { "Tipo", "Saldo final" }, { "Fecha", "12/09/2026" } }
-            };
-
-            var pagoSeleccionado = listaPagos.FirstOrDefault(p => p["Codigo"] == id);
-
-            if (pagoSeleccionado == null)
-            {
+            if (string.IsNullOrWhiteSpace(id))
                 return NotFound();
-            }
 
-            ViewBag.Pago = pagoSeleccionado;
-            return View();
+            var modelo = await _pagoService.ObtenerDetallePorCodigoAsync(id);
+            if (modelo == null)
+                return NotFound();
+
+            return View(modelo);
         }
     }
 }

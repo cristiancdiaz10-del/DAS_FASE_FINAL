@@ -1,0 +1,56 @@
+@model DAS_Proyecto.ViewModels.UsuarioViewModel
+
+@{
+    ViewData["Title"] = "Registrar Usuario";
+}
+
+<div class="max-w-2xl mx-auto mt-8 mb-10 bg-white p-6 md:p-8 rounded-xl border border-gray-200 shadow-sm">
+
+    <h2 class="text-2xl font-bold text-gray-900">Registrar Nuevo Usuario</h2>
+    <hr class="my-5 border-gray-200" />
+
+    <form asp-action="Create" method="post" class="space-y-5">
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm"></div>
+
+        <div>
+            <label asp-for="Nombre" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+            <input asp-for="Nombre" class="form-control" />
+            <span asp-validation-for="Nombre" class="text-red-600 text-sm mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="Correo" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+            <input asp-for="Correo" class="form-control" />
+            <span asp-validation-for="Correo" class="text-red-600 text-sm mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="Password" class="block text-sm font-semibold text-gray-700 mb-2">Contraseña</label>
+            <input asp-for="Password" type="password" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="Password" class="text-red-600 text-sm mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="Rol" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+            <select asp-for="Rol" class="form-control">
+                <option value="">Seleccione un rol...</option>
+                <option value="Administrador">Administrador</option>
+                <option value="Operativo">Operativo</option>
+            </select>
+            <span asp-validation-for="Rol" class="text-red-600 text-sm mt-1 block"></span>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-3 pt-5 border-t border-gray-200">
+            <a asp-action="Index" class="btn-cancel">Cancelar</a>
+            <button type="submit" class="btn-primary-orange">Guardar</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,6 +1,9 @@
-﻿@{
+﻿@using DAS_Proyecto.Models
+
+@model DAS_Proyecto.ViewModels.DetallePagoViewModel
+
+@{
     ViewData["Title"] = "Detalle de pago";
-    var pago = ViewBag.Pago as Dictionary<string, string>;
 }
 
 <style>
@@ -10,7 +13,6 @@
         padding: 0;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
-
 
     .header-flex {
         display: flex;
@@ -38,7 +40,6 @@
         margin-top: 0.25rem;
     }
 
-    
     .btn-back {
         background-color: #ffffff;
         color: #111827 !important;
@@ -56,7 +57,6 @@
         background-color: #f9fafb;
     }
 
-    
     .card-panel {
         background-color: #ffffff;
         border-radius: 0.75rem;
@@ -69,7 +69,6 @@
         align-items: start;
     }
 
-   
     .detail-section-title {
         font-size: 1rem;
         font-weight: 700;
@@ -106,7 +105,6 @@
         color: #111827;
     }
 
-    
     .order-summary-box {
         background-color: #fafafa;
         border: 1px solid #e5e7eb;
@@ -143,59 +141,107 @@
         color: #111827;
         font-weight: 700;
     }
-</style>
 
+    @@media (max-width: 768px) {
+        .card-panel {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding: 1.25rem;
+        }
+
+        .header-flex {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+</style>
 
 <div class="header-flex">
     <div class="header-text">
-        <h1 class="page-title">Detalle del pago @pago["Codigo"]</h1>
-        <p class="page-subtitle">Información detallada de la transacción y la orden asociada</p>
+        <h1 class="page-title">
+            Detalle del pago @Model.CodigoPago
+        </h1>
+
+        <p class="page-subtitle">
+            Información detallada de la transacción y la orden asociada
+        </p>
     </div>
-    <a asp-controller="Pagos" asp-action="Index" class="btn-back">← Volver a pagos</a>
+
+    <a asp-controller="Pagos"
+       asp-action="Index"
+       class="btn-back">
+        ← Volver a pagos
+    </a>
 </div>
 
 <div class="card-panel">
-    
-
     <div>
-        <h3 class="detail-section-title">Información de la transacción</h3>
-        
+        <h3 class="detail-section-title">
+            Información de la transacción
+        </h3>
+
         <div class="info-grid-vertical">
             <div class="info-item">
                 <label>Código de Pago</label>
-                <span>@pago["Codigo"]</span>
+                <span>@Model.CodigoPago</span>
             </div>
+
             <div class="info-item">
                 <label>Tipo de Pago</label>
-                <span>@pago["Tipo"]</span>
+                <span>
+    @switch (Model.TipoPago)
+    {
+        case TipoPago.Anticipo:
+            @:Anticipo
+            break;
+
+        case TipoPago.Abono:
+            @:Abono
+            break;
+
+        case TipoPago.SaldoFinal:
+            @:Saldo final
+            break;
+
+        default:
+            @:No especificado
+            break;
+    }
+</span>
             </div>
+
             <div class="info-item">
                 <label>Monto Pagado</label>
-                <span style="color: #059669;">@pago["Monto"]</span>
+                <span style="color: #059669;">
+                    $@Model.MontoPago.ToString("N2")
+                </span>
             </div>
+
             <div class="info-item">
                 <label>Fecha de Transacción</label>
-                <span>@pago["Fecha"]</span>
+                <span>@Model.FechaPago.ToString("dd/MM/yyyy")</span>
             </div>
         </div>
     </div>
 
-   
     <div class="order-summary-box">
-        <h3 class="summary-title">Información de la orden</h3>
-        
+        <h3 class="summary-title">
+            Información de la orden
+        </h3>
+
         <div class="summary-row">
             <span class="summary-label">Orden</span>
-            <span class="summary-value">@pago["Orden"]</span>
+            <span class="summary-value">@Model.CodigoOrden</span>
         </div>
+
         <div class="summary-row">
             <span class="summary-label">Cliente</span>
-            <span class="summary-value">@pago["Cliente"]</span>
+            <span class="summary-value">@Model.NombreCliente</span>
         </div>
+
         <div class="summary-row">
             <span class="summary-label">Estado</span>
-            <span class="summary-value" style="color: #d97706;">Registrado</span>
+            <span class="summary-value">@Model.EstadoOrden</span>
         </div>
     </div>
-
 </div>
