@@ -1,0 +1,79 @@
+# Abre este archivo en Visual Studio o Visual Studio Code.
+# Ejecuta primero POST /api/auth/token, copia el access_token de la respuesta
+# y pégalo en @token antes de ejecutar las solicitudes protegidas.
+
+@baseUrl = http://localhost:5049
+@token = PEGA_AQUI_EL_ACCESS_TOKEN
+
+### Comprobar aplicación y conexión a SQL Server
+GET {{baseUrl}}/health
+Accept: application/json
+
+### Obtener JWT
+# Sustituye correo y contraseña por los de una cuenta de prueba.
+POST {{baseUrl}}/api/auth/token
+Content-Type: application/json
+Accept: application/json
+
+{
+  "correo": "admin@ranibal.com",
+  "contrasena": "SUSTITUIR_POR_LA_CONTRASENA_DE_PRUEBA"
+}
+
+### Consultar endpoint privado
+GET {{baseUrl}}/api/prueba-seguridad/privado
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Comprobar rol Administrador (token de Administrador: 200; Operativo: 403)
+GET {{baseUrl}}/api/prueba-seguridad/administrador
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Comprobar rol Operativo (token Operativo: 200; Administrador: 403)
+GET {{baseUrl}}/api/prueba-seguridad/operativo
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Listar materiales
+GET {{baseUrl}}/api/materiales
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Obtener material por ID (sustituir 1 por un ID existente)
+GET {{baseUrl}}/api/materiales/1
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Crear material de prueba (cambiar código si ya existe)
+POST {{baseUrl}}/api/materiales
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "codigoMaterial": "MAT-API-PRUEBA-01",
+  "nombreMaterial": "Material de prueba API",
+  "cantidadDisponible": 10,
+  "unidadMedida": "Unidad",
+  "costoUnitario": 1.25,
+  "descripcion": "Registro temporal para validar la API"
+}
+
+### Listar cotizaciones
+GET {{baseUrl}}/api/cotizaciones
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Listar órdenes
+GET {{baseUrl}}/api/ordenes
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Listar pagos
+GET {{baseUrl}}/api/pagos
+Authorization: Bearer {{token}}
+Accept: application/json
+
+# Nota: pagos y órdenes con historial tienen restricciones de integridad.
+# Los endpoints PUT/DELETE de pagos y DELETE de órdenes devuelven 409 Conflict.

@@ -1,10 +1,45 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>DAS_Proyecto</RootNamespace>
+	  
+    <UserSecretsId>1443ba5a-00ec-41fe-9418-e0ba8178d36f</UserSecretsId>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <DefaultItemExcludes>$(DefaultItemExcludes);PruebasPago/**;Integracion_Fase3_Corregida/**</DefaultItemExcludes>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="PruebasPago/**/*.cs" />
+    <Content Remove="PruebasPago/**/*" />
+    <EmbeddedResource Remove="PruebasPago/**/*" />
+    <None Remove="PruebasPago/**/*" />
+
+    <Compile Remove="Integracion_Fase3_Corregida/**/*.cs" />
+    <Content Remove="Integracion_Fase3_Corregida/**/*" />
+    <EmbeddedResource Remove="Integracion_Fase3_Corregida/**/*" />
+    <None Remove="Integracion_Fase3_Corregida/**/*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.15" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.15" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.15" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.15" />
+
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.15">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.1" />
+  </ItemGroup>
 </Project>
