@@ -184,3 +184,11 @@ No se deben publicar contraseñas, claves JWT, archivos de configuración privad
 El manual técnico y el manual de usuario se entregan como documentos independientes.
 
 El repositorio contiene el código fuente, las migraciones, las pruebas y los archivos necesarios para ejecutar y revisar el proyecto.
+
+### Manual técnico
+
+Se incorpora el Manual Técnico del sistema Rótulos Ranibal, correspondiente a la documentación de la Fase 4.
+
+[Consultar Manual Técnico (PDF)](./Manual_Tecnico_Rotulos_Ranibal.pdf)
+
+**Nota:** Debido a que el aula virtual no permitió cargar archivos adicionales, el manual técnico se agregó directamente a este repositorio para su consulta.
