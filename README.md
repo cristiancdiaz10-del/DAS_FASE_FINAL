@@ -1,20 +1,78 @@
-# Sistema de gestión Rótulos Ranibal — Fase 4
+# Sistema de Gestión Rótulos Ranibal
 
-Proyecto ASP.NET Core MVC, C#, .NET 10, Entity Framework Core y SQL Server. Esta versión integra la base funcional `Integracion_fase4` con la autenticación Identity/JWT y la API REST de Crystel, además de la interacción asíncrona del inventario aportada por Rodrigo.
+Sistema web para la administración de las operaciones de Rótulos Ranibal. Desarrollado como proyecto académico utilizando ASP.NET Core MVC, C#, Entity Framework Core y SQL Server.
 
-## Requisitos
+La aplicación permite gestionar clientes, usuarios, servicios, cotizaciones, inventario, órdenes de trabajo, pagos e informes desde una plataforma centralizada.
+
+## 1. Funcionalidades principales
+
+- **Clientes:** registro y administración de información de clientes.
+- **Usuarios:** creación y administración de cuentas y roles.
+- **Servicios:** gestión de los servicios ofrecidos por la empresa.
+- **Cotizaciones:** creación y seguimiento de cotizaciones.
+- **Inventario:** administración de materiales mediante operaciones asíncronas con Fetch API.
+- **Órdenes de trabajo:** generación y seguimiento de órdenes a partir de cotizaciones.
+- **Pagos:** registro de anticipos, abonos y consulta de saldos pendientes.
+- **Informes:** consulta de información y resultados de las operaciones del sistema.
+- **API REST:** servicios para consultar y gestionar los recursos del sistema.
+- **Seguridad:** autenticación, autorización por roles, JWT y protección antifalsificación.
+
+## 2. Tecnologías utilizadas
+
+| Tecnología | Aplicación |
+|---|---|
+| C# | Lenguaje de programación |
+| ASP.NET Core MVC | Desarrollo de la aplicación web |
+| .NET 10 | Plataforma de ejecución |
+| Entity Framework Core | ORM y persistencia de datos |
+| SQL Server | Base de datos |
+| ASP.NET Identity | Autenticación y gestión de usuarios |
+| JWT | Autenticación de servicios API |
+| Fetch API | Comunicación asíncrona |
+| Swagger | Documentación y pruebas de API |
+| Bootstrap | Diseño e interfaz de usuario |
+| Git y GitHub | Control de versiones y colaboración |
+
+## 3. Arquitectura del proyecto
+
+El proyecto utiliza una estructura organizada por responsabilidades:
+
+- **Controllers:** controladores MVC y API.
+- **Models:** entidades del sistema.
+- **Data:** contexto de base de datos y unidad de trabajo.
+- **Repositories:** acceso y operaciones sobre los datos.
+- **Services:** lógica de negocio.
+- **DTOs:** objetos de transferencia de datos.
+- **ViewModels:** modelos utilizados por las vistas.
+- **Views:** interfaces de usuario.
+- **Filters:** filtros de seguridad.
+- **Migrations:** migraciones de Entity Framework Core.
+- **wwwroot:** archivos CSS, JavaScript, imágenes y bibliotecas.
+
+## 4. Requisitos para ejecutar el proyecto
 
 - .NET SDK 10.0.
 - Visual Studio 2022 actualizado o Visual Studio Code.
-- SQL Server LocalDB o una instancia de SQL Server accesible.
-- La base `DAS_Proyecto_DB` configurada en `appsettings.json` (por defecto usa LocalDB).
+- SQL Server LocalDB o una instancia de SQL Server.
+- Git, para clonar el repositorio.
 
-## Inicio rápido
+## 5. Instalación y ejecución
 
-1. Descomprime el proyecto y abre `DAS Proyecto.slnx` o `DAS Proyecto.csproj`.
-2. Revisa `ConnectionStrings:DefaultConnection` en `appsettings.json`.
-3. Antes del primer inicio de esta versión, realiza un respaldo de la base de datos. El arranque ejecuta `Database.MigrateAsync()` y aplicará la nueva migración `AgregarIdentity` junto con cualquier migración pendiente.
-4. En una terminal ubicada en la carpeta del proyecto, ejecuta:
+1. Clonar el repositorio:
+
+   ```bash
+   git clone URL_DEL_REPOSITORIO
+   ```
+
+2. Ingresar a la carpeta del proyecto y abrir `DAS Proyecto.slnx` o `DAS Proyecto.csproj`.
+
+3. Revisar la cadena de conexión en `appsettings.json`, dentro de `ConnectionStrings:DefaultConnection`.
+
+   La configuración inicial utiliza SQL Server LocalDB y la base de datos `DAS_Proyecto_DB`.
+
+4. Antes de ejecutar la aplicación sobre una base de datos existente de Fase 3, realizar un respaldo.
+
+5. Ejecutar los siguientes comandos desde la carpeta raíz:
 
    ```bash
    dotnet restore "DAS Proyecto.slnx"
@@ -22,72 +80,107 @@ Proyecto ASP.NET Core MVC, C#, .NET 10, Entity Framework Core y SQL Server. Esta
    dotnet run --project "DAS Proyecto.csproj"
    ```
 
-5. Abre `http://localhost:5049` o la URL indicada por Visual Studio.
-6. Si usas una base existente de Fase 3, las cuentas y hashes de contraseña se conservan; la migración asigna los roles de acuerdo con `Usuarios.Rol`. Inicia sesión con la cuenta existente.
+6. Abrir la aplicación en el navegador:
 
-### Base nueva sin usuarios
+   `http://localhost:5049`
 
-Antes de iniciar la aplicación por primera vez, define credenciales de administrador usando User Secrets:
+La aplicación aplica automáticamente las migraciones pendientes al iniciar.
+
+## 6. Acceso al sistema y roles
+
+El acceso se realiza mediante correo electrónico y contraseña.
+
+El sistema contempla los siguientes roles:
+
+- **Administrador:** permite gestionar usuarios y acceder a las funciones administrativas.
+- **Operativo:** permite utilizar las funcionalidades autorizadas para las operaciones del sistema, sin acceso a la administración de usuarios.
+
+### Configuración del primer administrador
+
+Cuando se utiliza una base de datos nueva que todavía no contiene usuarios, se pueden configurar las credenciales iniciales mediante User Secrets:
 
 ```bash
-dotnet user-secrets set "InitialAdmin:Email" "admin@ranibal.com" --project "DAS Proyecto.csproj"
-dotnet user-secrets set "InitialAdmin:Password" "UnaClaveSegura2026" --project "DAS Proyecto.csproj"
+dotnet user-secrets set "InitialAdmin:Email" "TU_CORREO_ADMIN" --project "DAS Proyecto.csproj"
+dotnet user-secrets set "InitialAdmin:Password" "TU_CLAVE_SEGURA" --project "DAS Proyecto.csproj"
 ```
 
-La contraseña debe cumplir la política de Identity: al menos 8 caracteres, mayúscula, minúscula y número. No guardes la contraseña en `appsettings.json` ni en Git.
+Después de iniciar la aplicación, se crea el primer usuario con el rol Administrador.
 
-## API REST y Swagger
+La contraseña debe tener como mínimo 8 caracteres, una letra mayúscula, una minúscula y un número.
 
-En entorno `Development`, Swagger queda disponible en:
+**Nota:** si se utiliza una base de datos existente que ya tiene usuarios, se deben utilizar las credenciales de esas cuentas. La configuración del administrador inicial no reemplaza usuarios existentes.
 
-- `http://localhost:5049/swagger`
+Las credenciales de demostración para la evaluación deben compartirse por un medio privado, no mediante este repositorio público.
 
-Para obtener un token independiente de la interfaz web:
+## 7. API REST y Swagger
 
-1. Ejecuta `POST /api/auth/token` con `correo` y `contrasena`.
-2. Copia `access_token` de la respuesta.
-3. En Swagger, selecciona **Authorize** y pega el valor como `Bearer <token>`.
-4. Prueba `/api/prueba-seguridad/privado`, `/administrador` y `/operativo` para verificar autenticación y roles.
+La aplicación dispone de una API REST para trabajar con los recursos del sistema.
 
-Rutas principales:
+| Recurso | Ruta |
+|---|---|
+| Autenticación | `/api/auth/token` |
+| Materiales | `/api/materiales` |
+| Cotizaciones | `/api/cotizaciones` |
+| Órdenes de trabajo | `/api/ordenes` |
+| Pagos | `/api/pagos` |
+| Pruebas de seguridad | `/api/prueba-seguridad/` |
 
-| Recurso | Métodos | Ruta |
-|---|---|---|
-| Autenticación | POST | `/api/auth/token` |
-| Cotizaciones | GET, POST, GET por ID, PUT, DELETE | `/api/cotizaciones` |
-| Materiales | GET, POST, GET por ID, PUT, DELETE | `/api/materiales` |
-| Órdenes | GET, POST, GET por ID, PUT de estado, POST para agregar material | `/api/ordenes` |
-| Pagos | GET, POST, GET por ID y GET por orden | `/api/pagos` |
-| Seguridad | GET | `/api/prueba-seguridad/*` |
+Para obtener un token JWT se utiliza `POST /api/auth/token`, enviando el correo y la contraseña de una cuenta registrada.
 
-Las operaciones de eliminación de órdenes y de modificación/eliminación de pagos responden `409 Conflict` intencionalmente para preservar la trazabilidad de órdenes y la auditoría contable. Los verbos PUT/DELETE de pagos se publican para comunicar esa regla de negocio, no para permitir alteraciones financieras.
+Swagger está disponible durante el entorno de desarrollo:
 
-## Pruebas existentes
+`http://localhost:5049/swagger`
 
-La suite `PruebasPago` cubre reglas de anticipos, abonos, saldo y cálculos de informes usando repositorios de prueba. Para ejecutarla:
+También se incluye el archivo `PruebasAPI/Ranibal-Fase4.http` con solicitudes de referencia para probar los servicios.
+
+Algunas operaciones tienen restricciones de integridad: por ejemplo, la modificación o eliminación de pagos y la eliminación de órdenes pueden responder `409 Conflict` para proteger la trazabilidad y los registros contables.
+
+## 8. Pruebas
+
+El proyecto incluye una suite de pruebas de consola en `PruebasPago`.
+
+Para ejecutarla:
 
 ```bash
 dotnet run --project "PruebasPago/PruebasPago.csproj"
 ```
 
-El resultado histórico de la rama base fue 32 pruebas correctas y 0 fallidas. Debe repetirse en el entorno local después de integrar esta versión. Las pruebas unitarias no sustituyen las pruebas de integración de la API con SQL Server; consulta `Documentacion/PRUEBAS_FASE4.md`.
+En la última ejecución verificada por el equipo se obtuvieron:
 
-## Documentación del proyecto
+- 47 pruebas correctas.
+- 0 pruebas fallidas.
 
-- `Documentacion/INTEGRACION_LEEME.md`: alcance de la unificación, decisiones y primer inicio.
-- `Documentacion/RUBRICA_FASE4_ESTADO.md`: relación de requisitos de la rúbrica con código y evidencia pendiente.
-- `Documentacion/MANUAL_TECNICO.md`: arquitectura, configuración, seguridad, API y despliegue.
-- `Documentacion/MANUAL_USUARIO.md`: guía de uso del sistema.
-- `Documentacion/PRUEBAS_FASE4.md`: matriz de pruebas y evidencias que debe completar el equipo.
-- `PruebasAPI/Ranibal-Fase4.http`: solicitudes de referencia para probar la API.
+Estas pruebas incluyen validaciones de pagos, anticipos, abonos, saldos, informes y validaciones de datos. No sustituyen las pruebas de integración de todos los endpoints de la API.
 
-## Secretos y despliegue
+## 9. Estado del despliegue
 
-En desarrollo, la aplicación genera una clave JWT aleatoria persistente en `.local/jwt-development.key`; esa carpeta está excluida de Git. No compartas esa clave. En producción configura por variables de entorno o un almacén seguro:
+Se realizó una publicación y validación de la aplicación en IIS en el equipo local.
+
+Dirección utilizada durante las pruebas:
+
+`http://localhost:8085`
+
+El endpoint `/health` respondió correctamente e informó disponibilidad de la base de datos.
+
+**Importante:** esta dirección corresponde al entorno local de pruebas y no representa un alojamiento público accesible desde Internet.
+
+## 10. Seguridad y configuración
+
+La aplicación utiliza ASP.NET Identity, JWT, roles y políticas de autorización.
+
+Para configurar un entorno de producción se deben establecer las siguientes variables:
 
 - `ConnectionStrings__DefaultConnection`
-- `Jwt__Key` (mínimo 32 bytes)
+- `Jwt__Key`
 - `Jwt__Issuer`
 - `Jwt__Audience`
 
-Usa HTTPS, configura el entorno `Production`, aplica las migraciones de forma controlada y publica con `dotnet publish -c Release`. El despliegue real en IIS/Azure y la validación desde un entorno accesible deben documentarse con evidencia del equipo; no se consideran realizados por el mero hecho de incluir la configuración.
+La clave JWT debe tener al menos 32 bytes y almacenarse como secreto del entorno.
+
+No se deben publicar contraseñas, claves JWT, archivos de configuración privados ni credenciales de bases de datos en GitHub.
+
+## 11. Documentación y entregables
+
+El manual técnico y el manual de usuario se entregan como documentos independientes.
+
+El repositorio contiene el código fuente, las migraciones, las pruebas y los archivos necesarios para ejecutar y revisar el proyecto.
